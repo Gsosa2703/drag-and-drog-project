@@ -1,27 +1,47 @@
-"use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
+//validation
+function validate(validatableInput) {
+    console.log(validatableInput);
+    var isValid = true;
+    if (validatableInput.required) {
+        isValid = isValid && validatableInput.value.toString().trim().length !== 0;
+    }
+    if (validatableInput.minLength != null &&
+        typeof validatableInput.value === "string") {
+        isValid =
+            isValid && validatableInput.value.length >= validatableInput.minLength;
+    }
+    if (validatableInput.maxLength != null &&
+        typeof validatableInput.value === "string") {
+        isValid =
+            isValid && validatableInput.value.length <= validatableInput.maxLength;
+    }
+    if (validatableInput.min != null &&
+        typeof validatableInput.value === "number") {
+        isValid = isValid && validatableInput.value >= validatableInput.min;
+    }
+    if (validatableInput.max != null &&
+        typeof validatableInput.value === "number") {
+        isValid = isValid && validatableInput.value <= validatableInput.max;
+    }
+    return isValid;
+}
 // autobind decorator
 function autobind(target, methodName, descriptor) {
-    const originalMethod = descriptor.value;
-    const adjDescriptor = {
+    var originalMethod = descriptor.value;
+    var adjDescriptor = {
         configurable: true,
-        get() {
-            const boundFn = originalMethod.bind(this);
+        get: function () {
+            var boundFn = originalMethod.bind(this);
             return boundFn;
-        },
+        }
     };
     return adjDescriptor;
 }
-class ProjectInput {
-    constructor() {
+var ProjectInput = /** @class */ (function () {
+    function ProjectInput() {
         this.templateElement = document.getElementById("project-input");
         this.hostElement = document.getElementById("app");
-        const importedNode = document.importNode(this.templateElement.content, true);
+        var importedNode = document.importNode(this.templateElement.content, true);
         this.element = importedNode.firstElementChild;
         this.element.id = "user-input";
         this.titleInputElement = this.element.querySelector("#title");
@@ -30,43 +50,55 @@ class ProjectInput {
         this.configure();
         this.attach();
     }
-    gatherUserInput() {
-        const enteredTitle = this.titleInputElement.value;
-        const enteredDescription = this.descriptionInputElement.value;
-        const enteredPeople = this.peopleInputElement.value;
-        if (enteredTitle.trim().length === 0 ||
-            enteredDescription.trim().length === 0 ||
-            enteredPeople.trim().length === 0) {
+    ProjectInput.prototype.gatherUserInput = function () {
+        var enteredTitle = this.titleInputElement.value;
+        var enteredDescription = this.descriptionInputElement.value;
+        var enteredPeople = this.peopleInputElement.value;
+        var titleValidatable = {
+            value: enteredTitle,
+            required: true
+        };
+        var descriptionValidatable = {
+            value: enteredDescription,
+            required: true,
+            minLength: 5
+        };
+        var peopleValidatable = {
+            value: enteredPeople,
+            required: true,
+            min: 1
+        };
+        if (!validate(titleValidatable) ||
+            !validate(descriptionValidatable) ||
+            !validate(peopleValidatable)) {
             alert("Invalid input, please try again!");
             return;
         }
         else {
             return [enteredTitle, enteredDescription, +enteredPeople];
         }
-    }
-    submitHandler(event) {
+    };
+    ProjectInput.prototype.submitHandler = function (event) {
         event.preventDefault();
         console.log(this.titleInputElement.value);
-        const userInput = this.gatherUserInput();
+        var userInput = this.gatherUserInput();
         if (Array.isArray(userInput)) {
-            const [title, desc, people] = userInput;
+            var title = userInput[0], desc = userInput[1], people = userInput[2];
             console.log(title, desc, people);
             this.clearInputs();
         }
-    }
-    clearInputs() {
+    };
+    ProjectInput.prototype.clearInputs = function () {
         this.titleInputElement.value = "";
         this.descriptionInputElement.value = "";
         this.peopleInputElement.value = "";
-    }
-    configure() {
+    };
+    ProjectInput.prototype.configure = function () {
         this.element.addEventListener("submit", this.submitHandler.bind(this));
-    }
-    attach() {
+    };
+    ProjectInput.prototype.attach = function () {
         this.hostElement.insertAdjacentElement("afterbegin", this.element);
-    }
-}
-__decorate([
-    autobind
-], ProjectInput.prototype, "submitHandler", null);
-const prjInput = new ProjectInput();
+    };
+    return ProjectInput;
+}());
+var prjInput = new ProjectInput();
