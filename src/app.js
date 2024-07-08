@@ -1,3 +1,35 @@
+//Project state management
+var ProjectState = /** @class */ (function () {
+    function ProjectState() {
+        this.listeners = [];
+        this.projects = [];
+    }
+    ProjectState.getInstance = function () {
+        if (this.instance) {
+            return this.instance;
+        }
+        this.instance = new ProjectState();
+        return this.instance;
+    };
+    ProjectState.prototype.addProject = function (title, description, numOfPeople) {
+        var newProject = {
+            id: Math.random().toString(),
+            title: title,
+            description: description,
+            people: numOfPeople
+        };
+        this.projects.push(newProject);
+        for (var _i = 0, _a = this.listeners; _i < _a.length; _i++) {
+            var listener = _a[_i];
+            listener(this.projects.slice());
+        }
+    };
+    ProjectState.prototype.addListener = function (listenerFn) {
+        this.listeners.push(listenerFn);
+    };
+    return ProjectState;
+}());
+var projectState = ProjectState.getInstance();
 function validate(validatableInput) {
     console.log(validatableInput);
     var isValid = true;
@@ -39,15 +71,30 @@ function autobind(target, methodName, descriptor) {
 //ProjectList Class
 var ProjectList = /** @class */ (function () {
     function ProjectList(type) {
+        var _this = this;
         this.type = type;
         this.templateElement = document.getElementById("project-list");
         this.hostElement = document.getElementById("app");
+        this.assignedProjects = [];
         var importedNode = document.importNode(this.templateElement.content, true);
         this.element = importedNode.firstElementChild;
         this.element.id = "".concat(this.type, "-projects");
+        projectState.addListener(function (projects) {
+            _this.assignedProjects = projects;
+            _this.renderProjects();
+        });
         this.attach();
         this.renderContent();
     }
+    ProjectList.prototype.renderProjects = function () {
+        var listEl = document.getElementById("".concat(this.type, "-projects-list"));
+        for (var _i = 0, _a = this.assignedProjects; _i < _a.length; _i++) {
+            var project = _a[_i];
+            var listItem = document.createElement("li");
+            listItem.textContent = project.title;
+            listEl.appendChild(listItem);
+        }
+    };
     ProjectList.prototype.attach = function () {
         this.hostElement.insertAdjacentElement("beforeend", this.element);
     };
@@ -100,6 +147,7 @@ var ProjectInput = /** @class */ (function () {
             return [enteredTitle, enteredDescription, +enteredPeople];
         }
     };
+    //@autobind
     ProjectInput.prototype.submitHandler = function (event) {
         event.preventDefault();
         console.log(this.titleInputElement.value);
@@ -107,6 +155,7 @@ var ProjectInput = /** @class */ (function () {
         if (Array.isArray(userInput)) {
             var title = userInput[0], desc = userInput[1], people = userInput[2];
             console.log(title, desc, people);
+            projectState.addProject(title, desc, people);
             this.clearInputs();
         }
     };
